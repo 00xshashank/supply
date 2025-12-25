@@ -1,0 +1,9 @@
+db.sqlite3
+
+pwd.txt
+
+.env
+
+log.txt
+
+__pycache__
