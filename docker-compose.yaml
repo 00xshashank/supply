@@ -1,0 +1,10 @@
+services:
+  mongo_db:
+    image: mongo:8.2.3-noble
+    ports:
+      - "27017:27017"
+    volumes:
+      - "./mongo-data:/data/db"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=1010110

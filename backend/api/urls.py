@@ -1,10 +1,11 @@
 from django.urls import path
 
-from .views import signup, Login, csrf, Logout
+from .views import *
 
 urlpatterns = [
-    path("signup/", signup, name="SignUp"),
-    path("login/", Login, name="LogIn"),
-    path("logout/", Logout, name="LogOut"),
-    path("csrf/", csrf, name="CSRF")
+    path("signup/", signupRoute, name="SignUp"),
+    path("login/", loginRoute, name="LogIn"),
+    path("logout/", logoutRoute, name="LogOut"),
+    path("first-chat/", indexChat, name="FirstChat")
+    # path("csrf/", csrf, name="CSRF")
 ]

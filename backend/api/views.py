@@ -2,89 +2,136 @@ from django.shortcuts import render
 from django.http import request, HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from django.db.utils import IntegrityError
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import csrf_exempt
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, EmailStr, ValidationError
 import json
 
-class UserValidation(BaseModel):
-    username: str
-    email: str
+from api.agent.description_agent import DescriptionAgentCaller
+
+from api.mongo import create_project
+
+class CreateUserRequest(BaseModel):
+    name: str
     password: str
+    email: EmailStr
 
-class LoginValidation(BaseModel):
-    username: str
-    password: str
+description_agent = DescriptionAgentCaller()
 
-@ensure_csrf_cookie
-def csrf(request):
-    return JsonResponse({ "message": "CSRF cookie set" })
-
-def signup(request):
+@csrf_exempt
+def signupRoute(request):
     if request.method == 'POST':
-        body_unicode = request.body.decode('utf-8')
-        json_body = json.loads(body_unicode)
+        body_json = json.loads(request.body)
         try:
-            user = UserValidation(**json_body)
-        except ValidationError as V:
-            print(f"Error occurred during input validation:\n\n{V}")
-            return JsonResponse({
-                "status": "failure",
-                "message": "Malformed request"
-            })
-        
-        try:
-            created_user = User.objects.create_user(
-                username=user.username,
-                email=user.email,
-                password=user.password
+            user_validated = CreateUserRequest(
+                name=body_json['name'],
+                password=body_json['password'],
+                email=body_json['email']
             )
-            created_user.save()
-        except IntegrityError as I:
-            print(f"Integrity Error occurred during user creation:\n\n{I}")
+        except KeyError as k:
+            return HttpResponse("Malformed request, please try again later")
+        
+        # TODO: Show errors on frontend
+        except ValidationError as v:
+            print(v)
+            error_list = v.errors(include_context=False)
+            print(error_list)
+            return HttpResponse(error_list)
+
+        user_save = User.objects.create_user(
+            username=user_validated.name,
+            email=user_validated.email,
+            password=user_validated.password
+        )
+        user_save.save()
+
+        return HttpResponse("created user successfully")
+    else:
+        return HttpResponse('Method not allowed on this endpoint')
+
+@csrf_exempt
+def loginRoute(request):
+    if request.method == 'POST':
+        body_json = json.loads(request.body)
+        user = authenticate(
+            username=body_json['username'],
+            password=body_json['password']
+        )
+        if user is not None:
+            login(request, user)
+            return HttpResponse("User found")
+        else:
+            return HttpResponse("No such user")
+        
+    else:
+        return HttpResponse('Method not allowed on this route')
+
+@csrf_exempt
+def createProject(request):
+    if request.method == 'POST':
+        if request.user.is_authenticated:
+            json_body = json.loads(request.body)
+            try:
+                name = json_body['name']
+                user_pk = request.user.pk
+                project_id = create_project(user_pk, name)
+                return JsonResponse({
+                    "status": "success",
+                    "projectId": project_id
+                })
+            except KeyError as E:
+                return JsonResponse({
+                    "status": "failure",
+                    "message": "Malformed request"
+                })
+        else:
             return JsonResponse({
                 "status": "failure",
-                "message": "User with given username already exists"
+                "message": "Please log in first"
             })
-
-        print(f"Uname: {user.username} has been registered")
-
+    else:
         return JsonResponse({
-            "status": "success",
-            "message": "User created successfully"
+            "status": "Failure",
+            "message": "Method not allowed on this route"
         })
 
-    return JsonResponse({
-        "status": "failure",
-        "message": "Method not allowed on this route"
-    })
+@csrf_exempt
+def getProjects(request):
+    pass
 
-def Login(request):
+@csrf_exempt
+def indexChat(request):
     if request.method == 'POST':
-        body_unicode = request.body.decode('utf-8')
-        json_body = json.loads(body_unicode)
-        print(json_body)
-        login_attempt = LoginValidation(**json_body)
-
-        user = authenticate(request=request, credentials={ 'username': login_attempt.username, 'password': login_attempt.password})
-        if user is not None:
-            login(request)
+        if request.user.is_authenticated:
+            json_body = json.loads(request.body)
+            msgs = request.session.get('messages', [])
+            user_msg = json_body['message']
+            agent_response = description_agent.call(pk=request.user.pk, message=user_msg, message_history=msgs)
+            if not msgs:
+                request.session['messages'] = [{"role": "user", "content": user_msg}, {"role": "assistant", "content": agent_response}]
+            else:
+                request.session['messages'].append({"role": "user", "content": user_msg})
+                request.session['messages'].append({"role": "assistant", "content": agent_response})
+            request.session.modified = True
             return JsonResponse({
-                "status": "success",
-                "message": "User successfully logged in"
+                "status": "success", 
+                "message": agent_response
             })
         else:
             return JsonResponse({
                 "status": "failure",
-                "messsage": "No such user found, please check credentials or try signing up instead"
+                "message": "not logged in"
             })
-        
-    return JsonResponse({
-        "status": "failure",
-        "message": "Method not allowed on this route"
-    })
+    else:
+        return JsonResponse({
+            "status": "failure",
+            "message": "Method not allowed on this route."
+        })
 
-
-def Logout(request):
+@csrf_exempt
+def logoutRoute(request):
     logout(request)
+    return HttpResponse("logged out successsfully")
+
+# TODO: Implement:
+# - Change password
