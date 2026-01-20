@@ -11,7 +11,7 @@ from google.genai import types
 
 load_dotenv()
 
-TAVILY_API_KEY = "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"
+TAVILY_API_KEY = ""
 
 SYSTEM_PROMPT = """
 You are a supply-chain compliance analyst.

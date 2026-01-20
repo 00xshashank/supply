@@ -39,6 +39,17 @@ def create_project(userPk: int, name: str) -> str:
         print(" === Exception while inserting project === ")
         print(E)
 
+def get_projects(
+    user_pk: int
+) -> List[str]:
+    returned_cursor = project_collection.find({
+        "userPk": user_pk
+    })
+    result = []
+    for item in returned_cursor:
+        result.append(item.get('name'))
+
+    return result
 
 def insert_human_message(
     index: int,

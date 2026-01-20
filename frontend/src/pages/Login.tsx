@@ -38,15 +38,15 @@ export default function Login() {
   async function validateUser() {
     let hasError = false
 
-    if (username.length < 6) {
-      toast.error("Please enter a valid username.")
-      hasError = true
-    }
+    // if (username.length < 6) {
+    //   toast.error("Please enter a valid username.")
+    //   hasError = true
+    // }
 
-    if (password.length < 8) {
-      toast.error("Please enter a valid password.")
-      hasError = true
-    }
+    // if (password.length < 8) {
+    //   toast.error("Please enter a valid password.")
+    //   hasError = true
+    // }
 
     if (hasError) return
 
@@ -100,6 +100,7 @@ export default function Login() {
         navigate("/dashboard")
       }
     } catch (err) {
+      console.error(err)
       toast.error("Unable to connect to server.", { id: "login" })
     }
   }

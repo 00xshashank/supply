@@ -6,6 +6,10 @@ urlpatterns = [
     path("signup/", signupRoute, name="SignUp"),
     path("login/", loginRoute, name="LogIn"),
     path("logout/", logoutRoute, name="LogOut"),
-    path("first-chat/", indexChat, name="FirstChat")
+    path("is-authenticated/", isUserAuthenticated, name="IsUserAuthenticated"),
+    path("first-chat/", indexChat, name="FirstChat"),
+    path("create-project/", createProject, name="CreateProject"),
+    path("get-projects/", getProjects, name="GetProjects"),
+    path("select-project/", selectProject, name="SelectProject")
     # path("csrf/", csrf, name="CSRF")
 ]
