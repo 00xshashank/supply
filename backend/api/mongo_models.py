@@ -17,7 +17,6 @@ class Source(BaseModel):
 class HumanMessage(BaseModel):
     projectId: str
     index: int
-    senderPK: int
     content: str
     receiverAgent: AIModel
     attached: Optional[List[Source]] = []

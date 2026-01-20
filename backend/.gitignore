@@ -7,3 +7,5 @@ pwd.txt
 log.txt
 
 __pycache__
+
+.venv/

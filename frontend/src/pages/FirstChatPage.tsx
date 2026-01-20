@@ -28,16 +28,17 @@ export default function FirstChatPage() {
             role: "user",
             content: userInput
         }])
-        setUserInput("")
         setLoading(true)
         
-        const agentResponse = await fetch(`${backendURL}/api/first-chat`, {
+        const agentResponse = await fetch(`${backendURL}/api/first-chat/`, {
             method: 'POST',
             credentials: "include",
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(messages)
+            body: JSON.stringify({
+                'message': userInput
+            })
         })
         const responseJson = await agentResponse.json()
         if (responseJson.status === "failure" && responseJson.text === "not logged in") {
@@ -53,6 +54,7 @@ export default function FirstChatPage() {
             navigate('/progress')
         }
 
+        setUserInput("")
         setLoading(false)
     }
 

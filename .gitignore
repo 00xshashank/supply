@@ -5,3 +5,9 @@ mongo-data/
 __pycache__/
 
 creds.txt
+
+.env
+
+.venv/
+
+__pycache__/

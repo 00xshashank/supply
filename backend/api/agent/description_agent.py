@@ -158,10 +158,10 @@ class DescriptionAgentCaller:
             ]
         )
 
-    def call(self, pk: int, message: str, message_history: List[Dict] = []):
+    def call(self, message: str, project_id: str, message_history: List[Dict] = []):
         insert_human_message(
             index=len(message_history),
-            senderPK=pk,
+            project_id=project_id,
             content=message,
             receiverAgent=AIModel.DESCRIPTION_AGENT
         )
@@ -174,7 +174,7 @@ class DescriptionAgentCaller:
         insert_model_message(
             index=len(message_history)+1,
             senderModel=AIModel.DESCRIPTION_AGENT,
-            receiverUser=pk,
+            project_id=project_id,
             content=agent_response['messages'][-1].content
         )
         return agent_response['messages'][-1].content

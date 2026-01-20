@@ -31,6 +31,7 @@ def create_project(userPk: int, name: str) -> str:
     except ValidationError as v:
         print(" === Validation Error in Project === ")
         print(v)
+        return
     
     try:
         project_collection.insert_one(proj.model_dump())
@@ -51,9 +52,23 @@ def get_projects(
 
     return result
 
+def get_project_id(
+    user_pk: int,
+    name: str
+) -> str:
+    returned_cursor = project_collection.find({
+        "userPk": user_pk,
+        "name": name
+    })
+    result = ""
+    for item in returned_cursor:
+        result = str(item.get('id'))
+
+    return result
+
 def insert_human_message(
     index: int,
-    senderPK: int,
+    project_id: str,
     content: str,
     receiverAgent: AIModel,
     attached: List[Source] = []
@@ -61,7 +76,7 @@ def insert_human_message(
     try:
         mes = HumanMessage(
             index=index,
-            senderPK=senderPK,
+            projectId=project_id,
             content=content,
             receiverAgent=receiverAgent,
             attached=attached
@@ -69,6 +84,7 @@ def insert_human_message(
     except ValidationError as v:
         print(" === Error while inserting human message === ")
         print(v)
+        return
     
     try:
         chat_collection.insert_one(mes.model_dump(mode="json"))
@@ -79,7 +95,7 @@ def insert_human_message(
 def insert_model_message(
     index: int,
     senderModel: AIModel,
-    receiverUser: int,
+    project_id: str,
     content: str,
     sources: List[Source] = []
 ):
@@ -87,12 +103,14 @@ def insert_model_message(
         mes = AIMessage(
             index=index,
             senderModel=senderModel,
-            receiverUser=receiverUser,
+            projectId=project_id,
             content=content,
             sources=sources
         )
     except ValidationError as v:
-        return v
+        print(" === Error while validating model message === ")
+        print(v)
+        return
     
     try:
         chat_collection.insert_one(mes.model_dump(mode="json"))

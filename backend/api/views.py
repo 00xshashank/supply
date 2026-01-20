@@ -9,7 +9,7 @@ import json
 
 from api.agent.description_agent import DescriptionAgentCaller
 
-from api.mongo import create_project, get_projects
+from api.mongo import create_project, get_projects, get_project_id
 
 class CreateUserRequest(BaseModel):
     name: str
@@ -128,6 +128,7 @@ def getProjects(request):
             projects_list = get_projects(user_pk)
             return JsonResponse({
                 "status": "success",
+                "name": request.user.username,
                 "message": projects_list
             })
         else:
@@ -156,12 +157,13 @@ def selectProject(request):
             if body_json['name'] not in projects_list:
                 return JsonResponse({
                     "status": "failure",
-                    "message": "no suh project"
+                    "message": "no such project"
                 })
             request.session['project'] = body_json['name']
+            request.session.modified = True
             print(f"Set active project of user with pk: {user_pk} to {request.session['project']}")
             return JsonResponse({
-                "'status": "success",
+                "status": "success",
                 "message": body_json['name']
             })
         else:
@@ -181,8 +183,16 @@ def indexChat(request):
         if request.user.is_authenticated:
             json_body = json.loads(request.body)
             msgs = request.session.get('messages', [])
+            active_project = request.session.get('project', '')
+            if active_project == '':
+                return JsonResponse({
+                    "status": "failure",
+                    "message": "Set active project first."
+                })
+            
             user_msg = json_body['message']
-            agent_response = description_agent.call(pk=request.user.pk, message=user_msg, message_history=msgs)
+            project_id = get_project_id(request.user.pk, active_project)
+            agent_response = description_agent.call(project_id=project_id, message=user_msg, message_history=msgs)
             if not msgs:
                 request.session['messages'] = [{"role": "user", "content": user_msg}, {"role": "assistant", "content": agent_response}]
             else:
@@ -193,11 +203,13 @@ def indexChat(request):
                 "status": "success", 
                 "message": agent_response
             })
+        
         else:
             return JsonResponse({
                 "status": "failure",
                 "message": "not logged in"
             })
+    
     else:
         return JsonResponse({
             "status": "failure",
