@@ -1,19 +1,16 @@
-import redis
-
-# Create Redis Client
-redisClient = redis.Redis(
-    host="localhost",
-    port=6379,
-    decode_responses=True
-)
-
-print(redisClient.ping())
-
-TASK_QUEUE = "task_queue"
-
-redisClient.lpush(TASK_QUEUE, "696f0c3c6f6b2d752d53da9b")
-entry = redisClient.brpop(TASK_QUEUE)
-print(entry)
+from redis_ops import wait_and_pop
+from mongo import get_description
+from cypher_agent import get_cypher_queries
+from neo4j_ops import run_graphdb_query
 
 while True:
+    proj_id = wait_and_pop()
+    print(f"Project ID: {proj_id}")
+    proj_description = get_description(proj_id)
+    cypher_queries = get_cypher_queries(proj_id, proj_description)
+    print(cypher_queries)
+
+    print("\n\n ==== Running Neo4j queries ==== ")
+    run_graphdb_query(cypher_queries)
+
     break

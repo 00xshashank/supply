@@ -1,14 +1,14 @@
 import os
 from dotenv import load_dotenv
 
-from langchain_openai import ChatOpenAI
+from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
 
 load_dotenv()
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-if not OPENROUTER_API_KEY:
-    raise ValueError("OPENROUTER_API_KEY not set in environment variables.")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY not set in environment variables.")
 
 SYSTEM_PROMPT = f"""
 You are a graph data engineer specializing in Neo4j.
@@ -29,6 +29,7 @@ Rules:
 - Do NOT wrap output in markdown
 - Do NOT include comments
 - Do NOT ask questions
+- To EVERY SINGLE node and edge that you give in the graph, attach a label with the project ID that will be passed in by the user. 
 """
 
 BUSINESS_DESCRIPTION = """
@@ -69,15 +70,22 @@ Known Uncertainties or Evolving Areas:
 - Long-term supplier contracts undecided.
 """
 
-llm = ChatOpenAI(
-    model="nex-agi/deepseek-v3.1-nex-n1:free",
-    api_key=OPENROUTER_API_KEY,
-    base_url="https://openrouter.ai/api/v1",
+llm = ChatGroq(
+	model="openai/gpt-oss-120b",
+	api_key=GROQ_API_KEY
 )
 
-response = llm.invoke([
-    SystemMessage(SYSTEM_PROMPT),
-    HumanMessage(BUSINESS_DESCRIPTION)
-])
+def get_cypher_queries(proj_id: str, description: str) -> str:
+    response = llm.invoke([
+        SystemMessage(SYSTEM_PROMPT),
+        HumanMessage(description + f"\nProject Id: {proj_id}")
+    ])
 
-print(response.content)
+    # print(" === CYPHER QUERIES RETURNED BY THE LLM === ")
+    # print(response.content)
+
+    return response.content
+
+if __name__ == "__main__":
+    response = get_cypher_queries(BUSINESS_DESCRIPTION)
+    print(response)

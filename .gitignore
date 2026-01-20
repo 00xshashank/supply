@@ -11,3 +11,11 @@ creds.txt
 .venv/
 
 __pycache__/
+
+redis-data/
+
+neo4j-plugins/
+
+neo4j-logs/
+
+neo4j-import/
