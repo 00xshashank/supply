@@ -70,13 +70,14 @@ Known Uncertainties or Evolving Areas:
 - Long-term supplier contracts undecided.
 """
 
-llm = ChatGroq(
-	model="openai/gpt-oss-120b",
-	api_key=GROQ_API_KEY
+cypher_llm = ChatGroq(
+  model="openai/gpt-oss-120b",
+  reasoning_effort="low",
+  api_key=GROQ_API_KEY
 )
 
 def get_cypher_queries(proj_id: str, description: str) -> str:
-    response = llm.invoke([
+    response = cypher_llm.invoke([
         SystemMessage(SYSTEM_PROMPT),
         HumanMessage(description + f"\nProject Id: {proj_id}")
     ])
@@ -87,5 +88,5 @@ def get_cypher_queries(proj_id: str, description: str) -> str:
     return response.content
 
 if __name__ == "__main__":
-    response = get_cypher_queries(BUSINESS_DESCRIPTION)
+    response = get_cypher_queries("aaaaaaaaaaa", BUSINESS_DESCRIPTION)
     print(response)

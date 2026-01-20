@@ -8,12 +8,16 @@ NEO4J_URI = os.getenv("NEO4J_URI")
 
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 NEO4J_UNAME = os.getenv("NEO4J_UNAME")
-NEO4J_AUTH = (NEO4J_URI, NEO4J_PASSWORD)
+NEO4J_AUTH = (NEO4J_UNAME, NEO4J_PASSWORD)
 
-env_vars = [NEO4J_UNAME, NEO4J_PASSWORD, NEO4J_URI]
-for var in env_vars:
+required_env_vars = {
+    "NEO4J_URI": NEO4J_URI,
+    "NEO4J_UNAME": NEO4J_UNAME,
+    "NEO4J_PASSWORD": NEO4J_PASSWORD,
+}
+for var in required_env_vars:
     if not var:
-        raise ValueError(f"{var} not declared in environment variables.")
+        raise ValueError(f"{required_env_vars[var]} not declared in environment variables.")
 
 driver = GraphDatabase.driver(NEO4J_URI, auth=NEO4J_AUTH)
 

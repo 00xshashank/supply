@@ -19,3 +19,7 @@ neo4j-plugins/
 neo4j-logs/
 
 neo4j-import/
+
+responses/
+
+*.txt
