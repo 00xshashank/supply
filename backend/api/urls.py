@@ -10,6 +10,7 @@ urlpatterns = [
     path("first-chat/", indexChat, name="FirstChat"),
     path("create-project/", createProject, name="CreateProject"),
     path("get-projects/", getProjects, name="GetProjects"),
-    path("select-project/", selectProject, name="SelectProject")
+    path("select-project/", selectProject, name="SelectProject"),
+    path("get-chats/", getAllMessages, name="GetAllMessages")
     # path("csrf/", csrf, name="CSRF")
 ]

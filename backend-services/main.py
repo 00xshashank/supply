@@ -34,12 +34,12 @@ while True:
     
     set_status(proj_id, 'Researching')
     print("Now researching individual components...")
-    for obj in research_list:
+    for i, obj in enumerate(research_list):
         print(" === Now researching: === ")
         print(obj)
         print(" ==== ")
         research_response = researcher_agent.call(str(obj))
-        store_research_results(proj_id, str(obj), str(research_response))
+        store_research_results(i, proj_id, str(obj), str(research_response))
         time.sleep(30)
 
     break

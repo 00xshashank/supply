@@ -32,7 +32,3 @@ class Project(BaseModel):
     id: str
     userPk: int
     name: str
-
-class FinalDescription(BaseModel):
-    projectId: str
-    description: str

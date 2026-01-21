@@ -9,7 +9,7 @@ import json
 
 from api.agent.description_agent import DescriptionAgentCaller
 
-from api.mongo import create_project, get_projects, get_project_id
+from api.mongo import create_project, get_projects, get_project_id, get_all_messages
 
 class CreateUserRequest(BaseModel):
     name: str
@@ -199,6 +199,11 @@ def indexChat(request):
                 request.session['messages'].append({"role": "user", "content": user_msg})
                 request.session['messages'].append({"role": "assistant", "content": agent_response})
             request.session.modified = True
+            if agent_response == "completed":
+                return JsonResponse({
+                    "status": "completed",
+                    "message": "Description found successfully"
+                })
             return JsonResponse({
                 "status": "success", 
                 "message": agent_response
@@ -214,6 +219,28 @@ def indexChat(request):
         return JsonResponse({
             "status": "failure",
             "message": "Method not allowed on this route."
+        })
+
+@csrf_exempt
+def getAllMessages(request):
+    if request.user.is_authenticated:
+        active_project = request.session['project']
+        if not active_project:
+            return JsonResponse({
+                "status": "failure",
+                "message": "Please get an active project first."
+            })
+        proj_id = get_project_id(request.user.pk, active_project)
+        messages = get_all_messages(proj_id)
+        return JsonResponse({
+            "status": "success",
+            "message": messages
+        })
+
+    else:
+        return JsonResponse({
+            "status": "failure",
+            "message": "Please log in first."
         })
 
 @csrf_exempt

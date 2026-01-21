@@ -1,9 +1,10 @@
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ArrowBigRight, LoaderCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router"
+import { toast } from "sonner"
 
 const backendURL = "http://localhost:8000"
 
@@ -22,6 +23,35 @@ export default function FirstChatPage() {
     const [isLoading, setLoading] = useState<boolean>(false);
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        async function fetchChat() {
+            const chatsResponse = await fetch(`${backendURL}/api/get-chats`, {
+                credentials: "include",
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            const chatsJson = await chatsResponse.json()
+            console.log(chatsJson)
+            
+            if (chatsJson['status'] === "success") {
+                const chatsState = chatsJson['message'].map((m: { index: number, role: "user" | "assistant", content: string }) => {
+                    let mes: Message = {
+                        role: m['role'],
+                        content: m['content']
+                    }
+                    return mes
+                })
+
+                setMessages(chatsState)
+            } else {
+                toast.error("Failed to fetch previous chats.")
+            }
+        }
+
+        fetchChat()
+    }, [])
 
     async function askQuestion() {
         setMessages([...messages, {
@@ -51,6 +81,7 @@ export default function FirstChatPage() {
             }])
         }
         if (responseJson.status === "completed") {
+            toast.info("Information etracted successfully.")
             navigate('/progress')
         }
 

@@ -3,7 +3,7 @@ from pymongo import MongoClient
 import os
 from pydantic import ValidationError
 from typing import Optional, List
-from api.mongo_models import AIMessage, AIModel, HumanMessage, Source, FinalDescription, Project
+from api.mongo_models import AIMessage, AIModel, HumanMessage, Source, Project
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -17,6 +17,7 @@ mongo_client = MongoClient(MONGO_URI)
 db = mongo_client.get_database('supply')
 chat_collection = db['Chats']
 project_collection = db['Projects']
+desc_collection = db['Descriptions']
 
 from api.utils import generate_random_id
 
@@ -118,11 +119,33 @@ def insert_model_message(
         print(" === EXCEPTION WHILE INSERTING HUMAN MESSAGE === ")
         raise E
 
-def insert_final_description():
-    pass
+def insert_final_description(proj_id: str, description: str):
+    desc_collection.insert_one({
+        "projectId": proj_id,
+        "description": description
+    })
 
-def get_all_messages():
-    pass
+def get_all_messages(project_id: str):
+    returned_cursor = chat_collection.find({
+        "projectId": project_id
+    })
+    chats_list = []
+    for item in returned_cursor:
+        if 'receiverAgent' in item.keys():
+            chats_list.append({
+                "index": item['index'],
+                "role": "user",
+                "content": item['content']
+            })
+        else:
+            chats_list.append({
+                "index": item['index'],
+                "role": "assistant",
+                "content": item['content']
+            })
+
+    sorted_messages = sorted(chats_list, key=lambda x: x.get('index', 2000000))
+    return sorted_messages
 
 if __name__ == "__main__":
     print(insert_human_message(

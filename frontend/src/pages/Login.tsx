@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import {
   Card,
   CardHeader,
@@ -27,39 +27,39 @@ export default function Login() {
   const [password, setPassword] = useState("")
   const navigate = useNavigate()
 
-  useEffect(() => {
-    fetch(`${BACKEND_URL}/api/csrf`, {
-      credentials: "include",
-    }).catch(() => {
-      toast.error("Failed to initialize CSRF protection.")
-    })
-  }, [])
+  // useEffect(() => {
+  //   fetch(`${BACKEND_URL}/api/csrf`, {
+  //     credentials: "include",
+  //   }).catch(() => {
+  //     toast.error("Failed to initialize CSRF protection.")
+  //   })
+  // }, [])
 
   async function validateUser() {
     let hasError = false
 
-    // if (username.length < 6) {
-    //   toast.error("Please enter a valid username.")
-    //   hasError = true
-    // }
+    if (username.length < 6) {
+      toast.error("Please enter a valid username.")
+      hasError = true
+    }
 
-    // if (password.length < 8) {
-    //   toast.error("Please enter a valid password.")
-    //   hasError = true
-    // }
+    if (password.length < 8) {
+      toast.error("Please enter a valid password.")
+      hasError = true
+    }
 
     if (hasError) return
 
     try {
-      const csrfToken = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("csrftoken="))
-        ?.split("=")[1]
+      // const csrfToken = document.cookie
+      //   .split("; ")
+      //   .find((row) => row.startsWith("csrftoken="))
+      //   ?.split("=")[1]
 
-      if (!csrfToken) {
-        toast.error("CSRF token missing.")
-        return
-      }
+      // if (!csrfToken) {
+      //   toast.error("CSRF token missing.")
+      //   return
+      // }
 
       toast.loading("Logging in…", { id: "login" })
 
@@ -68,7 +68,6 @@ export default function Login() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
         },
         body: JSON.stringify({
           username,

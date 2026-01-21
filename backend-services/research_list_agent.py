@@ -17,7 +17,7 @@ You are a supply chain research analyst specializing in stability, sustainabilit
 Your task is to generate a comprehensive list of research topics that assess supply chain stability, sustainability, and alternatives. Each research topic must be mapped to specific nodes and edges from the Cypher queries.
 
 Output Format:
-For each node or edge in the graph, generate relevant research topics in the following JSON structure:
+For line of Cypher used to create the graph, generate relevant research topics in the following JSON structure:
 
 {{
   "nodeId": "NodeLabel:nodeName",
@@ -38,7 +38,7 @@ Rules:
 - Do NOT include explanations
 - Do NOT wrap output in markdown
 - Do NOT include comments
-- Generate 3-8 research topics per node/edge depending on criticality
+- Generate 2-5 research topics per node/edge depending on criticality
 - Focus on actionable, specific research questions
 - Cover all three categories (stability, sustainability, alternatives) where applicable
 - Map research to the exact node/edge identifiers from the Cypher queries
@@ -48,6 +48,7 @@ Rules:
 - For Factory nodes: research capacity constraints, energy sources, compliance
 - For Market/Customer edges: research demand volatility, geographic expansion, channel alternatives
 - Prioritize critical supply chain components (raw materials, tier-1 suppliers, single-source dependencies)
+- Make sure your queries list has a 1:1 correspondence with the Cypher queries list passed to you in terms of nodes and edges.
 """
 
 llm = ChatGroq(
@@ -58,11 +59,9 @@ llm = ChatGroq(
 def get_research_list(proj_id: str, description: str, cypher_queries: str) -> str:
     research_content = llm.invoke([
         SystemMessage(SYSTEM_PROMPT),
-        HumanMessage(f"""Business Description: {description}\nCypher queries: {cypher_queries}""")
+        HumanMessage(f"""Business Description: {description}\nProject Id: {proj_id}\nCypher queries: {cypher_queries}""")
     ])
 
-    # print(" === CYPHER QUERIES RETURNED BY THE LLM === ")
-    # print(response.content)
     response_str = research_content.content
     response_json = json.loads(response_str)
 
@@ -107,7 +106,6 @@ Known Uncertainties or Evolving Areas:
 """
 
 CYPHER_QUERIES_LIST = """
-Project ID: aaaaaaaaaaa
 MERGE (c:Company:Project_aaaaaaaaaaa {name: 'ToyCo', location: 'CountryX', projectId: 'aaaaaaaaaaa'})
 MERGE (f:Factory:Project_aaaaaaaaaaa {name: 'Main Toy Manufacturing Facility', location: 'CityY', projectId: 'aaaaaaaaaaa'})
 MERGE (c)-[:OWNS {projectId: 'aaaaaaaaaaa'}]->(f)

@@ -133,16 +133,10 @@ Demand forecasting for peak seasons (festivals, holidays) is under continuous re
 Expansion of international distribution channels remains under evaluation.
 """
 
-from api.mongo import insert_final_description
-from api.mongo import insert_human_message, insert_model_message
+from api.mongo import insert_human_message, insert_model_message, insert_final_description
 from api.mongo_models import AIModel
 
-@tool
-def set_final_description(final_description: str) -> bool:
-    """Use this tool to set the final business description of the user.
-    Input: final_description: string: The final description as interpreted from the user's input
-    """
-    pass
+from api.redis_ops import queue_task
 
 class DescriptionAgentCaller:
     def __init__(self):
@@ -154,11 +148,23 @@ class DescriptionAgentCaller:
         self.agent = create_agent(
             model=self.llm,
             tools=[
-                set_final_description
+                self.set_final_description
             ]
         )
+        self.project_id = ""
+        self.completed = False
+
+    @tool
+    def set_final_description(self, final_description: str) -> bool:
+        """Use this tool to set the final business description of the user.
+        Input: final_description: string: The final description as interpreted from the user's input
+        """
+        insert_final_description(proj_id=self.project_id, description=final_description)
+        self.completed = True
+        queue_task(self.project_id)
 
     def call(self, message: str, project_id: str, message_history: List[Dict] = []):
+        self.project_id = project_id
         insert_human_message(
             index=len(message_history),
             project_id=project_id,
@@ -177,6 +183,8 @@ class DescriptionAgentCaller:
             project_id=project_id,
             content=agent_response['messages'][-1].content
         )
+        if self.completed == True:
+            return "completed"
         return agent_response['messages'][-1].content
 
 

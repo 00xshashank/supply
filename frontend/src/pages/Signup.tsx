@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
-import { Link } from "react-router"
+import { Link, useNavigate } from "react-router"
 import { z } from "zod"
 import { toast } from "sonner"
 
@@ -22,6 +22,8 @@ export default function SignUp() {
   const [password2, setPassword2] = useState("")
   const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+
+  const navigate = useNavigate()
 
   async function createUser() {
     let hasError = false
@@ -51,31 +53,31 @@ export default function SignUp() {
     setIsLoading(true)
 
     try {
-      console.log("[v0] Fetching CSRF token from:", `${BACKEND_URL}/api/csrf`)
-      const cookieResponse = await fetch(`${BACKEND_URL}/api/csrf`, {
-        credentials: "include",
-      })
+    //   console.log("[v0] Fetching CSRF token from:", `${BACKEND_URL}/api/csrf`)
+    //   const cookieResponse = await fetch(`${BACKEND_URL}/api/csrf`, {
+    //     credentials: "include",
+    //   })
 
-      console.log("[v0] CSRF response status:", cookieResponse.status)
+    //   console.log("[v0] CSRF response status:", cookieResponse.status)
 
-      if (!cookieResponse.ok) {
-        toast.error("Failed to fetch CSRF token.")
-        setIsLoading(false)
-        return
-      }
+    //   if (!cookieResponse.ok) {
+    //     toast.error("Failed to fetch CSRF token.")
+    //     setIsLoading(false)
+    //     return
+    //   }
 
-      const csrfToken = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("csrftoken="))
-        ?.split("=")[1]
+      // const csrfToken = document.cookie
+      //   .split("; ")
+      //   .find((row) => row.startsWith("csrftoken="))
+      //   ?.split("=")[1]
 
-      console.log("[v0] CSRF token found:", !!csrfToken)
+      // console.log("[v0] CSRF token found:", !!csrfToken)
 
-      if (!csrfToken) {
-        toast.error("CSRF token not found.")
-        setIsLoading(false)
-        return
-      }
+      // if (!csrfToken) {
+      //   toast.error("CSRF token not found.")
+      //   setIsLoading(false)
+      //   return
+      // }
 
       console.log("[v0] Sending signup request to:", `${BACKEND_URL}/api/signup/`)
       const response = await fetch(`${BACKEND_URL}/api/signup/`, {
@@ -83,12 +85,11 @@ export default function SignUp() {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
         },
         body: JSON.stringify({
-          username,
-          password,
-          email,
+          "name": username,
+          "password": password,
+          "email": email,
         }),
       })
 
@@ -114,6 +115,7 @@ export default function SignUp() {
         setPassword("")
         setPassword2("")
         setEmail("")
+        navigate('/login')
       }
     } catch (err) {
       console.error("[v0] Sign up error:", err)

@@ -47,6 +47,7 @@ export default function EmptyDemo() {
 		if ("status" in createJson) {
 			if (createJson["status"] === "success") {
 				const setResponse = await fetch(`${backendURL}/api/select-project/`, {
+					method: 'POST',
 					credentials: "include",
 					headers: {
 						'Content-Type': 'application/json',
