@@ -21,19 +21,53 @@ for var in required_env_vars:
 
 driver = GraphDatabase.driver(uri=NEO4J_URI, auth=(NEO4J_UNAME, NEO4J_PASSWORD))
 
-def retrieve_graph(projectId: str):
-    CYPHER_QUERY=f"""
-    MATCH (n)-[r]->(m)
-    WHERE r.projectId = '{projectId}'
-    OR n:{projectId}
-    OR m:{projectId}
-    RETURN DISTINCT n, r, m
-    """
-
+def get_all_nodes(project_id: str):
     with driver.session() as session:
-        result = session.run(CYPHER_QUERY)
-        return [record.data() for record in result]
-    
-if __name__ == "__main__":
-    print(retrieve_graph('aaaaaaaaaaa'))
+        result = session.run(f"""
+            MATCH (n:{project_id})-[r]-(m:{project_id})
+            RETURN 
+                elementId(n) AS n_id,
+                labels(n) AS n_labels,
+                properties(n) AS n_props,
 
+                elementId(m) AS m_id,
+                labels(m) AS m_labels,
+                properties(m) AS m_props,
+
+                elementId(r) AS r_id,
+                type(r) AS r_type,
+                properties(r) AS r_props
+        """)
+
+        nodes = {}
+        edges = {}
+
+        for record in result:
+            nodes[record["n_id"]] = {
+                "id": record["n_id"],
+                "labels": record["n_labels"],
+                **record["n_props"]
+            }
+
+            nodes[record["m_id"]] = {
+                "id": record["m_id"],
+                "labels": record["m_labels"],
+                **record["m_props"]
+            }
+
+            edges[record["r_id"]] = {
+                "id": record["r_id"],
+                "source": record["n_id"],
+                "target": record["m_id"],
+                "type": record["r_type"],
+                **record["r_props"]
+            }
+
+        return {
+            "nodes": list(nodes.values()),
+            "edges": list(edges.values())
+        }
+
+
+if __name__ == "__main__":
+    print(get_all_nodes("id_8bhqfqn9yh"))

@@ -10,8 +10,6 @@ redisClient = redis.Redis(
 
 TASK_QUEUE = "task_queue"
 
-# redisClient.lpush(TASK_QUEUE, "aaaaaaaaaaa")
-
 def wait_and_pop():
     entry = redisClient.brpop(TASK_QUEUE)
     return entry[1]

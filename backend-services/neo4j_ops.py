@@ -25,3 +25,10 @@ def run_graphdb_query(query, parameters=None):
     with driver.session() as session:
         result = session.run(query, parameters)
         return [record.data() for record in result]
+
+def get_all_nodes(project_id: str):
+    with driver.session() as session:
+        result = session.run(f"MATCH (n:id_{project_id}) RETURN n")
+        return [record["n"] for record in result]
+    
+# print(get_all_nodes("8bhqfqn9yh"))

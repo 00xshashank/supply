@@ -58,7 +58,7 @@ Demand forecasting for seasonal spikes—particularly during festivals and holid
 **End of Example Output**
 
 When you are done with your analysis and positive that your output comprehensively captures the user's description, please ask the user for confirmation once before committing to your final response.
-You are given access to a tool: set_final_description. Call the tool with the final description inferred by you if you are sure.
+You are given access to a tool: set_final_description. Call the tool with the final description inferred by you and the project id as inputs if you are sure.
 The tool does not return anything. After calling the tool, you final text must end with the literal string, "THE END" to end the conversation. 
 """
 
@@ -138,6 +138,8 @@ from api.mongo_models import AIModel
 
 from api.redis_ops import queue_task
 
+completed = False
+
 class DescriptionAgentCaller:
     def __init__(self):
         self.system_prompt = SYSTEM_PROMPT
@@ -151,20 +153,21 @@ class DescriptionAgentCaller:
                 self.set_final_description
             ]
         )
-        self.project_id = ""
-        self.completed = False
 
     @tool
-    def set_final_description(self, final_description: str) -> bool:
+    def set_final_description(proj_id, final_description: str) -> bool:
         """Use this tool to set the final business description of the user.
         Input: final_description: string: The final description as interpreted from the user's input
         """
-        insert_final_description(proj_id=self.project_id, description=final_description)
-        self.completed = True
-        queue_task(self.project_id)
+        print("=== TOOL CALL ===")
+        print(f"Project id: {proj_id}")
+        insert_final_description(proj_id=proj_id, description=final_description)
+        queue_task(proj_id)
+        completed = True
 
     def call(self, message: str, project_id: str, message_history: List[Dict] = []):
-        self.project_id = project_id
+        project_id = project_id
+        completed = False
         insert_human_message(
             index=len(message_history),
             project_id=project_id,
@@ -174,7 +177,7 @@ class DescriptionAgentCaller:
         print(f" === USER MESSAGE === \n{message}")
         print(f" === MESSAGE HISTORY === \n{message_history}")
         agent_response = self.agent.invoke(
-            {"messages": [{"role": "system", "content": self.system_prompt}] + message_history}
+            {"messages": [{"role": "system", "content": f"{self.system_prompt}\nProject id: {project_id}"}] + message_history + [{"role": "system", "content": self.system_prompt}]}
         )
         print(f"===== Response ===== \nf{agent_response}")
         insert_model_message(
@@ -183,7 +186,7 @@ class DescriptionAgentCaller:
             project_id=project_id,
             content=agent_response['messages'][-1].content
         )
-        if self.completed == True:
+        if completed == True:
             return "completed"
         return agent_response['messages'][-1].content
 

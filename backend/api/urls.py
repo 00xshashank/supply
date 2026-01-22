@@ -11,6 +11,9 @@ urlpatterns = [
     path("create-project/", createProject, name="CreateProject"),
     path("get-projects/", getProjects, name="GetProjects"),
     path("select-project/", selectProject, name="SelectProject"),
-    path("get-chats/", getAllMessages, name="GetAllMessages")
+    path("get-chats/", getAllMessages, name="GetAllMessages"),
+    path("status/", getStatus, name="GetStatus"),
+    path("node-information/", nodeResearchInformation, name="NodeResearchInformation"),
+    path("research/", getResearch, name="GetResearch")
     # path("csrf/", csrf, name="CSRF")
 ]

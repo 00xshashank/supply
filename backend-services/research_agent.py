@@ -18,8 +18,8 @@ if not TAVILY_API_KEY:
     raise ValueError("TAVILY_API_KEY not set in environment variables.")
 
 SYSTEM_PROMPT = """
-You are a supply chain research specialist. You will be given a specific research topic related to a supply chain node or edge, along with context about the business and supply chain component.
-Your task is to conduct thorough research and provide actionable findings.
+You are a supply chain research specialist. You will be given a Neo4j node related to a supply chain node or edge, along with context about the business and supply chain component.
+Your task is to provide actionable findings.
 
 Input Format:
 - nodeId or edgeId: The supply chain component being researched
@@ -27,24 +27,13 @@ Input Format:
 - businessContext: Background information about the company and supply chain
 
 Your research must:
-1. Use web search to find current, credible sources
-2. Provide specific data, metrics, and examples
-3. Include source citations
-4. Identify risks and opportunities
-5. Recommend concrete actions
+1. Provide specific data, metrics, and examples
+2. Identify risks and opportunities
+3. Recommend concrete actions
 
 Output Format (JSON):
 {
-  "researchTopic": "Original research question",
-  "componentId": "nodeId or edgeId",
   "findings": "Detailed research findings with specific data and insights",
-  "sources": [
-    {
-      "title": "Source title",
-      "url": "Source URL",
-      "relevantData": "Key data point or quote from source"
-    }
-  ],
   "keyMetrics": [
     {
       "metric": "Metric name",
@@ -59,13 +48,6 @@ Output Format (JSON):
       "mitigation": "Suggested mitigation strategy"
     }
   ],
-  "opportunities": [
-    {
-      "opportunity": "Identified opportunity",
-      "impact": "Potential impact description",
-      "implementation": "How to pursue this opportunity"
-    }
-  ],
   "recommendations": [
     {
       "action": "Specific recommended action",
@@ -78,26 +60,13 @@ Output Format (JSON):
   "lastUpdated": "ISO 8601 timestamp"
 }
 
-Research Guidelines:
-- For Stability topics: Focus on supply disruption probability, lead times, geopolitical factors, financial health of suppliers, contract terms, backup options
-- For Sustainability topics: Search for certifications, carbon footprint data, environmental regulations, industry benchmarks, lifecycle assessments
-- For Alternatives topics: Identify viable alternatives if available with comparative analysis on cost, availability, performance, sustainability
-
 Quality Standards:
-- Cite sources from the last 2 years when possible
-- Prioritize industry reports, government data, certification bodies, peer-reviewed sources
-- Include quantitative data wherever available
-- Flag information gaps or areas requiring deeper investigation
 - Be specific: replace vague terms with concrete numbers, names, locations
 
 Rules:
 - Output ONLY valid JSON
-- Do NOT include markdown formatting
 - Do NOT include explanations outside the JSON structure
-- Do NOT fabricate data or sources
-- Use web_search tool for all factual claims
 - If information is not available, state this explicitly in findings
-- PLEASE USE THE web_search TOOL 3 TIMES ONLY PER QUERY PRESENTED BY THE USER.
 """
 
 tavily_client = TavilyClient(api_key=TAVILY_API_KEY)
@@ -108,20 +77,25 @@ class ResearcherAgent:
 		self.search_calls = 0
 		self.llm = ChatGroq(
 			model="openai/gpt-oss-120b",
+			reasoning_effort='medium',
 			api_key=GROQ_API_KEY
 		)
 		self.research_agent = create_agent(
 			model=self.llm,
 			system_prompt=SYSTEM_PROMPT,
 			tools=[
-				self.web_search
+				# self.web_search
 			]
 		)
 
-	def web_search(self, query):
+	def web_search(self, query="", *args):
 		"""Returns web search results for query passed as argument. CAN BE INVOKED A MAXIMUM OF 3 TIMES PER PROMPT, SO USE YOUR QUERIES WISELY"""
-		if self.search_calls>3:
-			return """Max limit on search calls exceeded"""
+		if not isinstance(query, str):
+			return "Error: query must be a string"
+		if query == "":
+			return "Sorry, wrong arguments, you just wasted a turn"
+		if self.search_calls>2:
+			return """Max limit exceeded"""
 
 		search_result = tavily_client.search(query)
 		print(" === AGENT CALLED SEARCH TOOL === ")
@@ -130,11 +104,11 @@ class ResearcherAgent:
 		self.search_calls += 1
 		return search_result
     
-	def call(self, query):
+	def call(self, proj_description, query):
 		self.search_calls = 0
 		research_content = self.research_agent.invoke({
 			"messages": [
-				{"role": "user", "content": query}
+				{"role": "user", "content": f"Context:{proj_description}\nQueryNode:{query}"}
 			]
 		})
 

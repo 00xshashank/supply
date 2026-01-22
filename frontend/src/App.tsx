@@ -43,9 +43,6 @@ export default function App() {
               <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-lg px-8 h-12">
                 <Link to="/signup">Get Started Free</Link>
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 h-12 bg-transparent">
-                Watch Demo
-              </Button>
             </div>
           </div>
         </div>

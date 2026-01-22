@@ -29,7 +29,7 @@ Rules:
 - Do NOT wrap output in markdown
 - Do NOT include comments
 - Do NOT ask questions
-- To EVERY SINGLE node and edge that you give in the graph, attach a label with the project ID that will be passed in by the user. 
+- To EVERY SINGLE node and edge that you give in the graph, attach a label with "id_" + the project ID that will be passed in by the user. Do not append Project_ or anything, just use the "id_" + raw id as a label.
 """
 
 BUSINESS_DESCRIPTION = """

@@ -18,6 +18,7 @@ db = mongo_client.get_database('supply')
 chat_collection = db['Chats']
 project_collection = db['Projects']
 desc_collection = db['Descriptions']
+research_collection = db['ResearchResults']
 
 from api.utils import generate_random_id
 
@@ -146,6 +147,20 @@ def get_all_messages(project_id: str):
 
     sorted_messages = sorted(chats_list, key=lambda x: x.get('index', 2000000))
     return sorted_messages
+
+def get_researched_content(project_id):
+    returned_cursor = research_collection.find({
+        "projectId": project_id
+    })
+
+    results = []
+    for item in returned_cursor:
+        results.append({
+            "id": item['elementId'],
+            "result": item['researchResult']
+        })
+
+    return results
 
 if __name__ == "__main__":
     print(insert_human_message(

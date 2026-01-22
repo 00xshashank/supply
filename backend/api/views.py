@@ -9,7 +9,9 @@ import json
 
 from api.agent.description_agent import DescriptionAgentCaller
 
-from api.mongo import create_project, get_projects, get_project_id, get_all_messages
+from api.mongo import create_project, get_projects, get_project_id, get_all_messages, get_researched_content
+from api.redis_ops import get_task_status
+from api.neo4j_ops import get_all_nodes
 
 class CreateUserRequest(BaseModel):
     name: str
@@ -17,6 +19,10 @@ class CreateUserRequest(BaseModel):
     email: EmailStr
 
 description_agent = DescriptionAgentCaller()
+
+SAMPLE_PROMPT = """
+The company operates a small-to-medium-scale toy manufacturing business focused on the design and production of educational and play-oriented toys for children. Manufacturing activities are centralized at a single production facility, with an emphasis on safety compliance, cost efficiency, and scalable product lines. Core Activities: Design & Manufacturing: Operates one primary toy manufacturing facility responsible for: Product design finalization Molding, assembly, finishing, and packaging Produces a range of toys including: Plastic toys Wooden toys Simple mechanical and educational playsets Production processes combine automated machinery with manual assembly for quality-sensitive components. Raw Material Sourcing: Primary Materials: Plastic resins (e.g., ABS, polypropylene) sourced from Reliance Petrochemicals. Wood materials (e.g., rubberwood, plywood) sourced from domestic and nearby regional suppliers. Metal components (screws, springs, fasteners) sourced from local hardware manufacturers. Finishing & Safety Materials: Non-toxic paints, dyes, and coatings sourced from certified suppliers to meet child safety standards. Packaging materials such as printed boxes, inserts, and protective wraps sourced from domestic packaging manufacturers. Supplier Network: Majority of suppliers are located domestically to reduce lead times and ensure supply stability. Select specialty components (e.g., electronic modules for interactive toys or specialty finishes) are imported from international suppliers on Ebay. Logistics & Distribution: All inbound and outbound logistics are handled by DTDC. Sales & Distribution Channels: Products are sold through: Online marketplaces Customers: Primary customers include: Independent toy retailers Online consumers
+"""
 
 @csrf_exempt
 def signupRoute(request):
@@ -232,11 +238,35 @@ def getAllMessages(request):
             })
         proj_id = get_project_id(request.user.pk, active_project)
         messages = get_all_messages(proj_id)
+        request.session['messages'] = messages
+        request.session.modified = True
         return JsonResponse({
             "status": "success",
             "message": messages
         })
 
+    else:
+        return JsonResponse({
+            "status": "failure",
+            "message": "Please log in first."
+        })
+
+@csrf_exempt
+def getStatus(request):
+    if request.user.is_authenticated:
+        active_project = request.session.get('project', None)
+        if active_project is None:
+            return JsonResponse({
+                "status": "failure",
+                "message": "No active project selected."
+            })
+        
+        proj_id = get_project_id(user_pk=request.user.pk, name=active_project)
+        return JsonResponse({
+            "status": "success",
+            "message": get_task_status(project_id=proj_id)
+        })
+    
     else:
         return JsonResponse({
             "status": "failure",
@@ -250,3 +280,27 @@ def logoutRoute(request):
         "status": "success",
         "message": "logged out successsfully"
     })
+
+@csrf_exempt
+def nodeResearchInformation(request):
+    if request.user.is_authenticated:
+        proj_name = request.session['project']
+        proj_id = get_project_id(user_pk=request.user.pk, name=proj_name)
+        return JsonResponse(get_all_nodes(f"id_{proj_id}"))
+    else:
+        return JsonResponse({
+            "status": "failure",
+            "message": "please log in first."
+        })
+
+@csrf_exempt
+def getResearch(request):
+    if request.user.is_authenticated:
+        proj_name = request.session['project']
+        proj_id = get_project_id(user_pk=request.user.pk, name=proj_name)
+        return JsonResponse({"content": get_researched_content(f"{proj_id}")})
+    else:
+        return JsonResponse({
+            "status": "failure",
+            "message": "please log in first."
+        })

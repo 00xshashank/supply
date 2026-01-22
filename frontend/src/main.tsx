@@ -10,6 +10,8 @@ import SignUp from './pages/Signup.tsx';
 import { DashboardPage } from './pages/Dashboard.tsx';
 import FirstChatPage from './pages/FirstChatPage.tsx';
 import ProgressPage from './pages/ProgressPage.tsx';
+import StatusPage from './pages/StatusPage.tsx';
+import GraphView from './pages/GraphPage.tsx';
 
 const router = createBrowserRouter([
 	{
@@ -35,6 +37,14 @@ const router = createBrowserRouter([
 	{
 		path: "/progress",
 		element: <ProgressPage />
+	},
+	{
+		path: "/status",
+		element: <StatusPage />
+	},
+	{
+		path: "/graph",
+		element: <GraphView />
 	}
 ])
 
